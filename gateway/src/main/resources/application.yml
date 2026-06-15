@@ -1,0 +1,49 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    # Nacos 服务注册发现
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+    # 网关路由配置
+    gateway:
+      routes:
+        # 认证服务
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+        # 用户服务
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+        # 商品服务
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/product/**
+        # 聊天服务
+        - id: chat-service
+          uri: lb://chat-service
+          predicates:
+            - Path=/chat/**
+
+      # 全局默认过滤器
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
+
+    # 使用 LoadBalancer 替代 Ribbon
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+logging:
+  level:
+    com.secondhand.gateway: info

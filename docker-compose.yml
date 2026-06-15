@@ -1,0 +1,210 @@
+version: "3.8"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+
+services:
+
+  # ============================================================
+  # MySQL 5.7 — 数据库（含 ShardingSphere 分片表）
+  # ============================================================
+  mysql:
+    image: mysql:5.7
+    container_name: secondhand-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: CHANGED_DOCKER_PASS
+      MYSQL_DATABASE: secondhand_trade
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./doc/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pCHANGED_DOCKER_PASS"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app-network
+
+  # ============================================================
+  # Redis 7 — 缓存（仅 product-service 使用）
+  # ============================================================
+  redis:
+    image: redis:7
+    container_name: secondhand-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "CHANGED_DOCKER_PASS", "--appendonly", "yes"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "CHANGED_DOCKER_PASS", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  # ============================================================
+  # Nacos 2.0.4 — 服务注册发现（standalone 模式）
+  # ============================================================
+  nacos:
+    image: nacos/nacos-server:2.0.3
+    container_name: secondhand-nacos
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MODE: standalone
+      TZ: Asia/Shanghai
+    ports:
+      - "8849:8848"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-network
+
+  # ============================================================
+  # auth-service（端口 8081）
+  # ============================================================
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: auth-service
+    container_name: secondhand-auth
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TZ=Asia/Shanghai
+    ports:
+      - "8081:8081"
+    networks:
+      - app-network
+
+  # ============================================================
+  # user-service（端口 8082）
+  # ============================================================
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: user-service
+    container_name: secondhand-user
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TZ=Asia/Shanghai
+    ports:
+      - "8082:8082"
+    networks:
+      - app-network
+
+  # ============================================================
+  # product-service（端口 8083，额外依赖 Redis）
+  # ============================================================
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: product-service
+    container_name: secondhand-product
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TZ=Asia/Shanghai
+    ports:
+      - "8083:8083"
+    networks:
+      - app-network
+
+  # ============================================================
+  # chat-service（端口 8084）
+  # ============================================================
+  chat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: chat-service
+    container_name: secondhand-chat
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TZ=Asia/Shanghai
+    ports:
+      - "8084:8084"
+    networks:
+      - app-network
+
+  # ============================================================
+  # gateway（端口 8088 — Swing 客户端入口）
+  # ============================================================
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: gateway
+    container_name: secondhand-gateway
+    restart: unless-stopped
+    depends_on:
+      nacos:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      chat-service:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TZ=Asia/Shanghai
+    ports:
+      - "8088:8088"
+    networks:
+      - app-network

@@ -1,0 +1,15 @@
+spring:
+  shardingsphere:
+    datasource:
+      ds:
+        url: jdbc:mysql://mysql:3306/secondhand_trade?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+        username: root
+        password: CHANGED_DOCKER_PASS
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+  redis:
+    host: redis
+    port: 6379
+    password: CHANGED_DOCKER_PASS

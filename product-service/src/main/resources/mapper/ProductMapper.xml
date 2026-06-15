@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.secondhand.product.mapper.ProductMapper">
+
+    <!-- 搜索结果映射 -->
+    <resultMap id="BaseResultMap" type="com.secondhand.product.entity.Product">
+        <id column="product_id" property="productId"/>
+        <result column="name" property="name"/>
+        <result column="price" property="price"/>
+        <result column="description" property="description"/>
+        <result column="pickup_point" property="pickupPoint"/>
+        <result column="user_id" property="userId"/>
+        <result column="seller_name" property="sellerName"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 搜索：支持按商品ID精确匹配或按名称模糊匹配，排除指定用户 -->
+    <select id="searchByKeywordExcludeUser" resultMap="BaseResultMap">
+        SELECT * FROM product
+        WHERE status = 1
+          AND user_id != #{excludeUserId}
+          AND (
+                product_id = #{keyword}
+                OR name LIKE CONCAT('%', #{keyword}, '%')
+              )
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 获取全部上架商品，按发布时间倒序 -->
+    <select id="selectAllByStatusOrderByCreatedAtDesc" resultMap="BaseResultMap">
+        SELECT * FROM product
+        WHERE status = #{status}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 获取当前最大商品ID -->
+    <select id="selectMaxProductId" resultType="java.lang.Long">
+        SELECT MAX(product_id) FROM product
+    </select>
+
+    <!-- 分页查询全部上架商品（排除当前用户），按发布时间倒序 -->
+    <select id="selectPageByStatus" resultMap="BaseResultMap">
+        SELECT * FROM product
+        WHERE status = #{status}
+          AND user_id != #{excludeUserId}
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>
