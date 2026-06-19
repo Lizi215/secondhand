@@ -15,6 +15,7 @@ import com.secondhand.common.exception.ErrorCode;
 import com.secondhand.common.util.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -57,6 +58,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public LoginResponse register(RegisterRequest request) {
         String username = request.getUsername();
         String password = request.getPassword();

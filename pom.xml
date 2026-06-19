@@ -42,7 +42,7 @@
 
         <!-- 中间件 -->
         <shardingsphere.version>5.0.0</shardingsphere.version>
-        <nacos-client.version>2.0.4</nacos-client.version>
+        <nacos-client.version>2.2.3</nacos-client.version>
 
         <!-- 工具 -->
         <hutool.version>5.8.16</hutool.version>

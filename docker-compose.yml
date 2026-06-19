@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   app-network:
     driver: bridge
@@ -61,7 +59,7 @@ services:
   # Nacos 2.0.4 — 服务注册发现（standalone 模式）
   # ============================================================
   nacos:
-    image: nacos/nacos-server:2.0.3
+    image: nacos/nacos-server:v2.2.3
     container_name: secondhand-nacos
     restart: unless-stopped
     depends_on:

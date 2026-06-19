@@ -251,7 +251,7 @@ public class MainFrame extends JFrame {
 
                     SwingUtilities.invokeLater(() -> {
                         refreshTable(currentProducts);
-                        statusLabel.setText("搜索 \" + keyword + \" 找到 " + currentProducts.size() + " 条");
+                        statusLabel.setText("搜索 \"" + keyword + "\" 找到 " + currentProducts.size() + " 条");
                     });
                 }
                 return null;

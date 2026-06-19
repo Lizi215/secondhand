@@ -27,6 +27,12 @@ spring:
               standard:
                 sharding-column: from_user_id
                 sharding-algorithm-name: mod-msg
+            key-generate-strategy:
+              column: msg_id
+              key-generator-name: snowflake-msg
+        key-generators:
+          snowflake-msg:
+            type: SNOWFLAKE
         sharding-algorithms:
           mod-msg:
             type: MOD

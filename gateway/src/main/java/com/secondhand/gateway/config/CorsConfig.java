@@ -21,8 +21,8 @@ public class CorsConfig {
         config.addAllowedHeader("*");
         // 允许所有 HTTP 方法
         config.addAllowedMethod("*");
-        // 允许携带凭证
-        config.setAllowCredentials(true);
+        // 使用 JWT Token 认证，无需 Cookie 凭证
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
