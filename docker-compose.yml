@@ -25,6 +25,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./doc/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./doc/mysql/conf.d:/etc/mysql/conf.d
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pCHANGED_DOCKER_PASS"]
       interval: 10s

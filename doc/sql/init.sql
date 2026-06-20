@@ -10,6 +10,9 @@ CREATE DATABASE IF NOT EXISTS `secondhand_trade`
 
 USE `secondhand_trade`;
 
+-- 强制客户端使用 utf8mb4（修复 Docker MySQL 5.7 默认 latin1 导致的中文乱码）
+SET NAMES utf8mb4;
+
 -- ============================================================
 -- user 表（3 张物理分片表，分片键: user_id % 3）
 -- ============================================================
